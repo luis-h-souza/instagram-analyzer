@@ -12,7 +12,7 @@ INSTAGRAM_USERNAME=seu_usuario_instagram
 INSTAGRAM_PASSWORD=sua_senha_instagram
 
 # OpenAI API Key (já configurada)
-[OPENAI_KEY_REMOVED]_pUPeuT3BlbkFJK1hpd9tSWhSmVeqyV7DRPXcNakFCfJXYXSOW6q-yq52ock7Nd_bALzwdO1BCanoO7dT4dPyCYA
+[OPENAI_KEY_REMOVED]_key_here
 ```
 
 ### 2. **Reiniciar a Aplicação**

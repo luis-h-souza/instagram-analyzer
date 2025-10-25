@@ -3,12 +3,14 @@
 ## 📋 **Variáveis Configuradas:**
 
 ```env
-[OPENAI_KEY_REMOVED]_pUPeuT3BlbkFJK1hpd9tSWhSmVeqyV7DRPXcNakFCfJXYXSOW6q-yq52ock7Nd_bALzwdO1BCanoO7dT4dPyCYA
-INSTAGRAM_USERNAME=picko_lhs
-INSTAGRAM_PASSWORD=Al3x@ndr@
-API_HOST=localhost
-API_PORT=8000
-FRONTEND_URL=http://localhost:3000
+# Instagram credentials (OBRIGATÓRIO para dados reais)
+INSTAGRAM_USERNAME=seu_usuario_instagram
+INSTAGRAM_PASSWORD=sua_senha_instagram
+
+# OpenAI API Key (já configurada)
+[OPENAI_KEY_REMOVED]_key_here
+```
+
 ```
 
 ## 🎯 **Status das Configurações:**
