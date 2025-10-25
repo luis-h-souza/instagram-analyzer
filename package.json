@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "format": "python ./scripts/run_black.py",
+    "format:check": "python -m black --check ."
   },
   "dependencies": {
     "next": "14.0.3",

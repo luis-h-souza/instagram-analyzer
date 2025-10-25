@@ -1,11 +1,14 @@
 import instaloader
 import os
 import asyncio
+import time
 import random
+import json
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Optional, Dict
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
@@ -17,20 +20,70 @@ class InstagramService:
         self.session_file = None
         self.last_login = None
         self.rate_limit_until = None
-        self._login()
+        self.use_mock = os.getenv("USE_MOCK_DATA", "false").lower() == "true"
+        self.mock_service = None  # Será inicializado sob demanda
+
+        self._load_rate_limit_state()  # Carrega rate limit salvo antes de tentar login
+
+        if self.use_mock:
+            from services.mock_service import MockInstagramService
+
+            self.mock_service = MockInstagramService()
+
+        try:
+            self._login()
+        except Exception as e:
+            print(f"⚠️ Erro no login, usando dados mock: {str(e)}")
+            self.use_mock = True
 
     # ==========================================================
     # LOGIN
     # ==========================================================
+    async def _handle_rate_limit_error(self, wait_time: int = 300):
+        """Gerencia erros de rate limiting com backoff exponencial"""
+        if not hasattr(self, "_backoff_time"):
+            self._backoff_time = 300  # Começa com 5 minutos (não 60s)
+        else:
+            self._backoff_time = min(self._backoff_time * 2, 7200)  # Máximo 2 horas
+
+        wait_time = max(wait_time, self._backoff_time)
+        print(f"⏳ Rate limiting detectado - aguardando {wait_time//60} minutos...")
+        self._set_rate_limit(wait_time)
+        await asyncio.sleep(wait_time)
+
     def _login(self):
         """Faz login no Instagram com gerenciamento de sessão e suporte a 2FA"""
+        if self.use_mock:
+            print("🔄 Usando modo mock - sem login necessário")
+            return
+
         try:
+            print("🔄 Iniciando processo de login...")
+
+            # Lista de user agents para rotação
+            user_agents = [
+                # Chrome mais recente (2025)
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+                # Edge atualizado
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0",
+                # Firefox Windows
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/118.0",
+                # Safari MacOS
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15",
+                # Chrome MacOS
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+            ]
+
+            # Aguardar um tempo aleatório antes de tentar login (sincrono aqui)
+            print("⏳ Aguardando alguns segundos antes de tentar login...")
+            time.sleep(random.uniform(15, 30))
+
             self.L = instaloader.Instaloader(
-                user_agent=(
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/120.0.0.0 Safari/537.36"
-                ),
+                user_agent=random.choice(user_agents),
                 download_pictures=False,
                 download_videos=False,
                 download_video_thumbnails=False,
@@ -38,8 +91,8 @@ class InstagramService:
                 download_comments=False,
                 save_metadata=False,
                 compress_json=False,
-                max_connection_attempts=3,
-                request_timeout=30,
+                max_connection_attempts=5,  # Aumentado para tolerância
+                request_timeout=45,  # Aumentado para evitar timeouts em conexões lentas
                 sleep=True,
                 quiet=False,
             )
@@ -69,7 +122,9 @@ class InstagramService:
             # 3️⃣ Verifica se o login foi aceito
             logged_user = self.L.test_login()
             if not logged_user:
-                raise Exception("Falha no login — verifique usuário/senha ou autenticação 2FA")
+                raise Exception(
+                    "Falha no login — verifique usuário/senha ou autenticação 2FA"
+                )
 
             # 4️⃣ Caso o Instagram peça código 2FA
             if "two_factor" in str(logged_user).lower():
@@ -97,6 +152,37 @@ class InstagramService:
             except Exception as e:
                 print(f"⚠️ Erro ao renovar sessão: {e}")
 
+    def _load_rate_limit_state(self):
+        """Carrega estado de rate limit de arquivo"""
+        rate_limit_file = Path("rate_limit_state.json")
+        if rate_limit_file.exists():
+            try:
+                import json
+
+                with open(rate_limit_file, "r") as f:
+                    data = json.load(f)
+                    if "rate_limit_until" in data:
+                        until = datetime.fromisoformat(data["rate_limit_until"])
+                        if until > datetime.now():
+                            self.rate_limit_until = until
+                            print(f"⚠️ Rate limit ativo até {until}")
+            except Exception as e:
+                print(f"Erro ao carregar estado de rate limit: {e}")
+
+    def _save_rate_limit_state(self):
+        """Salva estado de rate limit em arquivo"""
+        if self.rate_limit_until:
+            try:
+                import json
+
+                rate_limit_file = Path("rate_limit_state.json")
+                with open(rate_limit_file, "w") as f:
+                    json.dump(
+                        {"rate_limit_until": self.rate_limit_until.isoformat()}, f
+                    )
+            except Exception as e:
+                print(f"Erro ao salvar estado de rate limit: {e}")
+
     def _check_rate_limit(self):
         """Verifica se há bloqueio ativo"""
         if self.rate_limit_until and datetime.now() < self.rate_limit_until:
@@ -107,40 +193,80 @@ class InstagramService:
         """Ativa temporariamente bloqueio de requisições"""
         self.rate_limit_until = datetime.now() + timedelta(seconds=seconds)
         print(f"🚫 Rate limiting detectado — aguardando {seconds} segundos")
+        self._save_rate_limit_state()
 
-    async def _random_delay(self, min_sec: float = 1.5, max_sec: float = 4.0):
-        """Delay aleatório entre ações"""
-        delay = random.uniform(min_sec, max_sec)
-        await asyncio.sleep(delay)
+    async def _random_delay(self, min_sec: float = 3.0, max_sec: float = 8.0):
+        """Delay aleatório entre ações com jitter"""
+        base_delay = random.uniform(min_sec, max_sec)
+        jitter = random.uniform(0.5, 1.5)  # 50% menos até 50% mais
+        final_delay = base_delay * jitter
+        print(f"⏱️ Aguardando {final_delay:.1f} segundos antes da próxima ação...")
+        await asyncio.sleep(final_delay)
 
     # ==========================================================
     # COLETA DE DADOS
     # ==========================================================
-    async def coletar_dados_perfil(self, username: str, tentativas: int = 3) -> Dict:
+    async def get_profile_data(self, username: str, tentativas: int = 3) -> Dict:
         """Coleta dados de um perfil do Instagram com retry e fallback para mock"""
+        # Se estiver em modo mock, use o serviço mock
+        if self.use_mock:
+            if not self.mock_service:
+                from .mock_service import MockInstagramService
+
+                self.mock_service = MockInstagramService()
+            print(f"🔄 Usando dados mock para @{username}")
+            return await self.mock_service.get_profile_data(username)
+
         self._check_rate_limit()
         self._check_and_refresh_session()
 
         for tentativa in range(1, tentativas + 1):
             try:
-                print(f"📸 Coletando dados do perfil @{username} (tentativa {tentativa})")
+                print(
+                    f"📸 Coletando dados do perfil @{username} (tentativa {tentativa}/{tentativas})"
+                )
 
-                await self._random_delay(2, 4)
-                profile = instaloader.Profile.from_username(self.L.context, username)
+                # Delay maior entre tentativas
+                if tentativa > 1:
+                    await self._random_delay(
+                        10.0 * (tentativa - 1), 20.0 * (tentativa - 1)
+                    )
+                else:
+                    await self._random_delay(5, 10)
+
+                try:
+                    profile = instaloader.Profile.from_username(
+                        self.L.context, username
+                    )
+                except instaloader.exceptions.ConnectionException as e:
+                    error_msg = str(e).lower()
+                    if "401" in error_msg or "unauthorized" in error_msg:
+                        print(
+                            f"⚠️ Erro 401 (Unauthorized) detectado - aguardando 10 minutos"
+                        )
+                        await self._handle_rate_limit_error(600)  # 10 minutos
+                        continue
+                    if "429" in error_msg or "too many" in error_msg:
+                        print(f"⚠️ Rate limiting (429) detectado")
+                        await self._handle_rate_limit_error(300)  # 5 minutos
+                        continue
+                    raise
 
                 # Coleta posts com limite
                 posts_list, max_posts = [], 12
                 for i, post in enumerate(profile.get_posts()):
                     if i >= max_posts:
                         break
-                    posts_list.append({
-                        "likes": post.likes,
-                        "comments": post.comments,
-                        "caption": post.caption[:200] if post.caption else "",
-                        "date": post.date_local.isoformat(),
-                        "is_video": post.is_video,
-                        "url": f"https://www.instagram.com/p/{post.shortcode}/"
-                    })
+                    posts_list.append(
+                        {
+                            "likes": post.likes,
+                            "comments": post.comments,
+                            "caption": post.caption[:200] if post.caption else "",
+                            "date": post.date_local.isoformat(),
+                            "is_video": post.is_video,
+                            "url": f"https://www.instagram.com/p/{post.shortcode}/",
+                        }
+                    )
                     await self._random_delay(0.5, 1.5)
 
                 dados = {
@@ -154,7 +280,11 @@ class InstagramService:
                     "is_private": profile.is_private,
                     "is_verified": profile.is_verified,
                     "is_business": profile.is_business_account,
-                    "categoria": profile.business_category_name if profile.is_business_account else None,
+                    "categoria": (
+                        profile.business_category_name
+                        if profile.is_business_account
+                        else None
+                    ),
                     "url_externo": profile.external_url,
                     "posts": posts_list,
                     "coletado_em": datetime.now().isoformat(),
@@ -167,7 +297,9 @@ class InstagramService:
                 raise Exception(f"Perfil @{username} não encontrado.")
 
             except instaloader.exceptions.PrivateProfileNotFollowedException:
-                raise Exception(f"Perfil @{username} é privado e não pode ser acessado.")
+                raise Exception(
+                    f"Perfil @{username} é privado e não pode ser acessado."
+                )
 
             except instaloader.exceptions.LoginRequiredException:
                 print("🔐 Sessão expirada — renovando...")
@@ -224,7 +356,7 @@ class InstagramService:
                     "caption": f"Post de exemplo {i+1}",
                     "date": (datetime.now() - timedelta(days=i)).isoformat(),
                     "is_video": random.choice([True, False]),
-                    "url": "#"
+                    "url": "#",
                 }
                 for i in range(5)
             ],
@@ -246,7 +378,7 @@ class InstagramService:
                     "media_comentarios": 0,
                     "total_interacoes": 0,
                     "melhor_post": None,
-                    "posts_analisados": 0
+                    "posts_analisados": 0,
                 }
 
             total_likes = sum(p["likes"] for p in posts)

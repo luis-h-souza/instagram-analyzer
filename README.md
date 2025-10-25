@@ -8,224 +8,161 @@ Uma aplicação completa para análise de perfis do Instagram com geração de r
 - ✅ **Dados do Perfil**: Nome, bio, seguidores, posts
 - ✅ **Métricas**: Engajamento, frequência, hashtags
 - ✅ **Gráficos**: Performance dos posts, hashtags populares
-- ✅ **Relatório IA**: Análise estratégica completa
-- ✅ **Exportação**: PDF profissional
-- ✅ **Dashboard**: Interface moderna e responsiva
+# 📊 Instagram Analyzer
 
-### Sistema Anti Rate-Limiting
-- ✅ **Retry Inteligente**: Backoff exponencial (5s → 40s)
-- ✅ **Delays Adaptativos**: 3-8s entre requisições
-- ✅ **Fallback Automático**: Dados mock quando necessário
-- ✅ **Cache**: Rate limiting por IP (5-30 min)
+Uma aplicação para análise de perfis do Instagram com geração de relatórios estratégicos usando IA.
 
-### Proteção e Segurança
-- ✅ **Rate Limiting**: Sistema robusto de proteção
-- ✅ **Fallback**: Dados mock automáticos
-- ✅ **Cache**: Gestão inteligente de requisições
-- ✅ **Retry Logic**: 3 tentativas com backoff
+## Principais melhorias no README
+- Atualizei instruções de setup e execução (incluindo comandos para Windows)
+- Adicionei instruções de formatação de código (Black) e uso do `npm run format`
+- Documentei solução para erro de dependência comum (reportlab)
 
-## 🛠️ Tecnologias Utilizadas
+## 🚀 Funcionalidades
 
-### Backend
-- **Python 3.8+**
-- **FastAPI** - Framework web moderno
-- **Instaloader** - Coleta de dados do Instagram
-- **OpenAI API** - Geração de relatórios com IA
-- **ReportLab** - Geração de PDFs
-- **BeautifulSoup** - Web scraping
+- Análise de perfis (dados básicos, métricas, gráficos)
+- Relatórios gerados por IA (OpenAI)
+- Exportação para PDF (ReportLab)
+- Fallback para dados mock quando rate limits ocorrerem
 
-### Frontend
-- **Next.js 14** - Framework React
-- **TypeScript** - Tipagem estática
-- **TailwindCSS** - Estilização
-- **Recharts** - Gráficos e visualizações
-- **Lucide React** - Ícones
+## Tecnologias
 
-## 📦 Instalação
+- Backend: Python 3.8+, FastAPI, Instaloader, ReportLab, OpenAI
+- Frontend: Next.js 14, React, TailwindCSS, Recharts
 
-### 1. Clone o repositório
-```bash
+## Rápido: instalação e execução (Windows / PowerShell)
+
+1) Clone o repositório
+
+```powershell
 git clone <url-do-repositorio>
 cd instagram-analyzer
 ```
 
-### 2. Configure o Backend
+2) Backend — criar e ativar venv, instalar dependências
 
-```bash
-# Instalar dependências Python
-pip install -r requirements.txt
-
-# Configurar variáveis de ambiente
-cp env.example .env
-# Edite o arquivo .env com suas chaves
+```powershell
+cd backend
+python -m venv .venv
+# PowerShell
+. .\.venv\Scripts\Activate.ps1
+# ou CMD
+.\.venv\Scripts\activate.bat
+pip install -r ..\requirements.txt
 ```
 
-### 3. Configure o Frontend
+3) Frontend
 
-```bash
-# Instalar dependências Node.js
+```powershell
+cd ..
 npm install
 ```
 
-### 4. Configure as variáveis de ambiente
+4) Copie variáveis de ambiente e edite `.env` (na raiz do projeto)
 
-Crie um arquivo `.env` na raiz do projeto:
+```powershell
+cp env.example .env
+# Edite .env e defina as chaves necessárias (OPENAI, credenciais Instagram se for usar perfis privados)
+```
+
+Exemplo mínimo importante em `.env`:
 
 ```env
-# OpenAI API Key (obrigatório para relatórios de IA)
-[OPENAI_KEY_REMOVED]_chave_openai_aqui
+# OpenAI (necessário para relatórios IA)
+OPENAI_API_KEY=chave_openai_aqui
 
-# Instagram credentials (opcional, para perfis privados)
-INSTAGRAM_USERNAME=seu_usuario_instagram
-INSTAGRAM_PASSWORD=sua_senha_instagram
+# (Opcional) Credenciais Instagram para perfis privados
+INSTAGRAM_USERNAME=seu_usuario
+INSTAGRAM_PASSWORD=sua_senha
 
-# API Configuration
+# Configuração da API
 API_HOST=localhost
 API_PORT=8000
 FRONTEND_URL=http://localhost:3000
 ```
 
-## � Solução de Problemas
+## Executando a aplicação
 
-### Rate Limiting do Instagram
-- **Sintoma**: Erro 429 "Too Many Requests"
-- **Solução**: Aguarde 5-10 minutos entre análises
-- **Alternativa**: Sistema usa dados mock automaticamente
+Backend (modo rápido):
 
-### Perfis Privados
-- **Requisito**: Credenciais do Instagram no `.env`
-- **Alternativa**: Sistema fornece dados mock
-- **Dica**: Teste primeiro com perfis públicos
-
-### Relatórios de IA
-- **Requisito**: Chave OpenAI válida no `.env`
-- **Erro comum**: "API key not configured"
-- **Solução**: Configure OPENAI_API_KEY no `.env`
-
-### Configurações de Retry
-- **Tentativas**: 3 máximo
-- **Delay base**: 5 segundos
-- **Delay máximo**: 60 segundos
-- **Jitter**: 0.5x a 1.5x do delay base
-
-## 📊 Como Usar
-
-### Acessar a Aplicação
-- **Frontend**: http://localhost:3000
-- **Backend**: http://localhost:8000
-
-### Exemplos para Teste
-- `natgeo` (perfil público grande)
-- `nike` (perfil verificado)
-- `starbucks` (perfil comercial)
-- `teste` (receberá dados mock)
-
-## �🚀 Como Executar
-
-### 1. Iniciar o Backend
-```bash
+```powershell
 cd backend
 python main.py
+# ou, com reload (recomendado para desenvolvimento):
+# .venv\Scripts\python.exe -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
-A API estará disponível em: http://localhost:8000
 
-### 2. Iniciar o Frontend
-```bash
+Frontend:
+
+```powershell
+cd ..
 npm run dev
 ```
-O frontend estará disponível em: http://localhost:3000
 
-## 📋 Como Usar
+Acesse:
+- Frontend: http://localhost:3000
+- Backend: http://localhost:8000
 
-1. **Acesse a aplicação** em http://localhost:3000
-2. **Digite o username** do Instagram (com ou sem @)
-3. **Clique em "Analisar"** para processar o perfil
-4. **Visualize os resultados**:
-   - Dados básicos do perfil
-   - Métricas de engajamento
-   - Gráficos de performance
-   - Relatório estratégico gerado por IA
-5. **Exporte para PDF** se necessário
+## Formatação de código (Black)
 
-## 📊 Métricas Calculadas
+O repositório já inclui scripts para rodar o Black e um `npm` script:
 
-- **Engajamento médio**: (curtidas + comentários) / seguidores * 100
-- **Posts por semana**: Frequência de postagem
-- **Média de curtidas**: Média dos últimos posts
-- **Média de comentários**: Média dos últimos posts
-- **Principais hashtags**: Hashtags mais utilizadas
+- Usar via npm (raiz do projeto):
 
-## 🤖 Relatórios de IA
+```powershell
+npm run format
+```
 
-O sistema gera automaticamente relatórios estratégicos incluindo:
+Esse script prefere o Python dentro de `.venv` quando presente. Você também pode rodar diretamente:
 
-- **Resumo do negócio**
-- **Pontos fortes** identificados
-- **Pontos fracos** para melhoria
-- **Oportunidades** de crescimento
-- **Sugestões de abordagem** para prospecção
+```powershell
+. .\.venv\Scripts\Activate.ps1
+python -m black .
+```
 
-## 📁 Estrutura do Projeto
+## Solução de problemas comum
+
+- Erro: "ModuleNotFoundError: No module named 'reportlab'"
+   - Causa: dependência Python não instalada.
+   - Solução: ative a venv e rode `pip install -r requirements.txt`.
+
+- Erro: rate limiting (429)
+   - O sistema aplica backoff automático e fallback para dados mock.
+   - Solução manual: aguarde 5–30 minutos ou troque de rede/VPN.
+
+## Notas úteis para desenvolvimento
+
+- Se `npm run format` não alterou nada, significa que os arquivos já estavam compatíveis com o estilo do Black.
+- Se quiser forçar a checagem sem modificar arquivos:
+
+```powershell
+npm run format:check
+```
+
+## Troubleshooting de ambiente (Windows)
+
+- Ative a `.venv` antes de instalar pacotes ou rodar o backend para garantir que os pacotes vão para o ambiente correto.
+- Se usar PowerShell e der erro ao ativar a venv por política de execução, rode como administrador:
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+## Estrutura do projeto (resumida)
 
 ```
 instagram-analyzer/
-├── backend/
-│   ├── main.py                 # API principal
-│   ├── services/
-│   │   ├── instagram_service.py    # Coleta de dados
-│   │   ├── ai_service.py           # Integração com IA
-│   │   └── report_service.py       # Geração de PDFs
-│   └── data/                   # Dados coletados (JSON)
-├── app/
-│   ├── page.tsx               # Página principal
-│   ├── layout.tsx             # Layout da aplicação
-│   └── globals.css            # Estilos globais
-├── reports/                   # PDFs gerados
-├── requirements.txt           # Dependências Python
-├── package.json              # Dependências Node.js
-└── README.md                 # Este arquivo
+├── backend/                # Código Python (FastAPI)
+├── app/                    # Frontend Next.js
+├── scripts/                # Helpers (runner do Black)
+├── requirements.txt        # Dependências Python
+├── package.json            # Scripts e dependências Node
+└── README.md
 ```
 
-## ⚠️ Limitações e Considerações
+## Contribuindo
 
-1. **Rate Limiting**: O Instagram pode limitar requisições excessivas
-2. **Perfis Privados**: Requer credenciais válidas do Instagram
-3. **API Keys**: Necessário configurar chave da OpenAI para relatórios
-4. **Dados Públicos**: Apenas perfis públicos são analisados por padrão
-
-## 🔧 Configuração Avançada
-
-### Para Perfis Privados
-Configure suas credenciais do Instagram no arquivo `.env`:
-```env
-INSTAGRAM_USERNAME=seu_usuario
-INSTAGRAM_PASSWORD=sua_senha
-```
-
-### Para Relatórios de IA
-Obtenha uma chave da OpenAI em: https://platform.openai.com/api-keys
-
-## 📈 Próximos Passos
-
-- [ ] Implementar cache de dados
-- [ ] Adicionar mais métricas de análise
-- [ ] Suporte a múltiplos perfis
-- [ ] Dashboard de comparação
-- [ ] Notificações de mudanças
-- [ ] Integração com outras redes sociais
-
-## 🤝 Contribuição
-
-1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Push para a branch
-5. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo LICENSE para mais detalhes.
+Abra uma branch, faça commits pequenos e crie um PR. Veja também as issues abertas.
 
 ---
 
-**Desenvolvido com ❤️ para análise estratégica de perfis do Instagram**
+Se quiser, posso adaptar o README com instruções adicionais (Docker, CI, husky pre-commit) — diga o que prefere.

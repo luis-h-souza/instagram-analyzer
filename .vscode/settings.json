@@ -1,3 +1,9 @@
 {
-    "git.ignoreLimitWarning": true
+    "git.ignoreLimitWarning": true,
+    "python.formatting.provider": "black",
+    "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ms-python.python",
+    "python.formatting.blackArgs": ["--line-length", "88"],
+    "telemetry.telemetryLevel": "off"
 }
