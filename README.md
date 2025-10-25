@@ -4,29 +4,25 @@ Uma aplicação completa para análise de perfis do Instagram com geração de r
 
 ## 🚀 Funcionalidades
 
-### Semana 1 - Coleta de Dados
-- ✅ Coleta de dados básicos do perfil (nome, bio, seguidores, etc.)
-- ✅ Análise dos últimos 5 posts
-- ✅ Extração de hashtags e métricas de engajamento
-- ✅ Salvamento em JSON
+### Análise de Perfis
+- ✅ **Dados do Perfil**: Nome, bio, seguidores, posts
+- ✅ **Métricas**: Engajamento, frequência, hashtags
+- ✅ **Gráficos**: Performance dos posts, hashtags populares
+- ✅ **Relatório IA**: Análise estratégica completa
+- ✅ **Exportação**: PDF profissional
+- ✅ **Dashboard**: Interface moderna e responsiva
 
-### Semana 2 - Backend e API
-- ✅ API REST com FastAPI
-- ✅ Endpoints para análise de perfis
-- ✅ Cálculo de métricas de engajamento
-- ✅ Análise de frequência de postagens
+### Sistema Anti Rate-Limiting
+- ✅ **Retry Inteligente**: Backoff exponencial (5s → 40s)
+- ✅ **Delays Adaptativos**: 3-8s entre requisições
+- ✅ **Fallback Automático**: Dados mock quando necessário
+- ✅ **Cache**: Rate limiting por IP (5-30 min)
 
-### Semana 3 - IA e Relatórios
-- ✅ Integração com OpenAI GPT
-- ✅ Geração de relatórios estratégicos
-- ✅ Exportação para PDF
-- ✅ Análise de pontos fortes/fracos
-
-### Semana 4 - Frontend
-- ✅ Dashboard moderno com React/Next.js
-- ✅ Visualizações com gráficos (Recharts)
-- ✅ Interface responsiva com TailwindCSS
-- ✅ Integração completa com API
+### Proteção e Segurança
+- ✅ **Rate Limiting**: Sistema robusto de proteção
+- ✅ **Fallback**: Dados mock automáticos
+- ✅ **Cache**: Gestão inteligente de requisições
+- ✅ **Retry Logic**: 3 tentativas com backoff
 
 ## 🛠️ Tecnologias Utilizadas
 
@@ -89,7 +85,42 @@ API_PORT=8000
 FRONTEND_URL=http://localhost:3000
 ```
 
-## 🚀 Como Executar
+## � Solução de Problemas
+
+### Rate Limiting do Instagram
+- **Sintoma**: Erro 429 "Too Many Requests"
+- **Solução**: Aguarde 5-10 minutos entre análises
+- **Alternativa**: Sistema usa dados mock automaticamente
+
+### Perfis Privados
+- **Requisito**: Credenciais do Instagram no `.env`
+- **Alternativa**: Sistema fornece dados mock
+- **Dica**: Teste primeiro com perfis públicos
+
+### Relatórios de IA
+- **Requisito**: Chave OpenAI válida no `.env`
+- **Erro comum**: "API key not configured"
+- **Solução**: Configure OPENAI_API_KEY no `.env`
+
+### Configurações de Retry
+- **Tentativas**: 3 máximo
+- **Delay base**: 5 segundos
+- **Delay máximo**: 60 segundos
+- **Jitter**: 0.5x a 1.5x do delay base
+
+## 📊 Como Usar
+
+### Acessar a Aplicação
+- **Frontend**: http://localhost:3000
+- **Backend**: http://localhost:8000
+
+### Exemplos para Teste
+- `natgeo` (perfil público grande)
+- `nike` (perfil verificado)
+- `starbucks` (perfil comercial)
+- `teste` (receberá dados mock)
+
+## �🚀 Como Executar
 
 ### 1. Iniciar o Backend
 ```bash
