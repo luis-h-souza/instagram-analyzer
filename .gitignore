@@ -98,6 +98,59 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+*.env
+.envrc
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.key
+secrets.*
+*_credentials.*
+*_secret.*
+*_key.*
+config.*.json
+*.pem
+*.pfx
+*.p12
+
+# API keys and tokens
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+*.token
+*_token.*
+auth.json
+credentials.json
+
+# Session files
+session-*
+*.session
+*.cookie
+*.cookies
+
+# Backend specific
+backend/config.py
+backend/session-*
+backend/*_credentials.*
+backend/reports/*
+data/credentials/*
+
+# Temporary files that might contain secrets
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
 # Flask stuff:
 instance/
 .webassets-cache
